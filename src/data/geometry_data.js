@@ -23,70 +23,7 @@ function getVerticesFromCoordinates(coordinate){
   return vertices
 }
 
-export function handleLine(){
-  const lineCoordinates = [
-      [38.81551, 9.00382],
-      [38.81431 , 9.02005],
-      [38.83663 , 9.01869],
-      [38.83581 , 9.03285 ],
-      [38.82959 , 9.03243]
-  ];
-  const mercatoredLine = []
-  const point = []
-  for (let i =0; i < lineCoordinates.length; i++){
-    const [x, y] = WebMercatorfromLngLat([lineCoordinates[i][0], lineCoordinates[i][1]]);
-    mercatoredLine.push(x,y)
-    point.push(x)
-    point.push(y)
-    
-  }
-
-  const lineData = []
-  const normals = []
-  const sides = []
-
-  for (let i = 0; i < mercatoredLine.length - 2; i+=2){
-    const x1 = mercatoredLine[i];
-    const y1 = mercatoredLine[i + 1];
-    const x2 = mercatoredLine[i + 2];
-    const y2 = mercatoredLine[i + 3];
-
-     // Calculate normal
-     const dx = x2 - x1;
-     const dy = y2 - y1;
-     const len = Math.sqrt(dx * dx + dy * dy);
-     const nx = -dy / len;
-     const ny = dx / len;
-
-      // Add vertices for quad (two triangles)
-      lineData.push(
-        x1, y1,
-        x1, y1,
-        x2, y2,
-        x2, y2
-    );
-
-    // Add normals
-    normals.push(
-        nx, ny,
-        nx, ny,
-        nx, ny,
-        nx, ny
-    );
-
-    // Add sides (-1 for left, 1 for right)
-    sides.push(-1, 1, -1, 1);
-  }
-  return {
-    sides : sides , 
-    normals : normals , 
-    lineData : lineData,
-    point : point
-  }
-
-}
-
- function getBoundingBox(){
+ export const  getBoundingBox = () =>{
 
 
         const line = [
@@ -111,5 +48,100 @@ export function handleLine(){
      
     }
 
+export const handleLine = () => {
 
-export default getBoundingBox
+
+  const coordinate = [
+          [38.81551, 9.00382],
+          [38.81431 , 9.02005],
+          [38.83663 , 9.01869],
+          [38.83581 , 9.03285 ],
+          [38.82959 , 9.03243]
+          // [-132.2,65.4],
+          // [-0.4,68.5],
+          // [12.0,-29.5],
+          // [147.7,-32.5],
+          // [116.0,23.9],
+          // [-101.3,19.6]
+  ]
+  
+ 
+  const mercatorPoints = coordinate.map(coord => WebMercatorfromLngLat(coord));
+  
+ 
+  let minX = Infinity, maxX = -Infinity;
+  let minY = Infinity, maxY = -Infinity;
+  
+  mercatorPoints.forEach(([x, y]) => {
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y);
+    maxY = Math.max(maxY, y);
+  });
+  
+  const width = maxX - minX;
+  const height = maxY - minY;
+  const scale = Math.max(width, height);
+
+  const points = [];
+  mercatorPoints.forEach(([x, y]) => {
+    const normalizedX = 2 * ((x - minX) / scale - 0.5);
+    const normalizedY = 2 * ((y - minY) / scale - 0.5);
+    points.push(normalizedX, normalizedY);
+  });
+ 
+
+  const lineData = []
+  const normals = []
+  const sides = []
+  for (let i=0; i < points.length - 2; i+= 2){
+        const x1 = points[i];
+        const y1 = points[i + 1];
+        const x2 = points[i + 2];
+        const y2 = points[i + 3];
+
+    
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        const nx = -dy / len;
+        const ny = dx / len;
+
+        lineData.push(
+          x1, y1,
+          x1, y1,
+          x2, y2,
+          x2, y2
+      );
+
+      normals.push(
+        nx, ny,
+        nx, ny,
+        nx, ny,
+        nx, ny
+    );
+
+    sides.push(-1, 1, -1, 1);
+
+
+
+  }
+
+  const indices = [];
+  for (let i = 0; i < (points.length - 2) / 2; i++) {
+      const baseIndex = i * 4;
+      indices.push(
+        baseIndex, baseIndex + 1, baseIndex + 2,
+        baseIndex + 1, baseIndex + 2, baseIndex + 3
+      );
+  }
+
+  return {
+    points : points , 
+    lineData : lineData , 
+    normals : normals , 
+    sides : sides,
+    indices : indices
+  }
+
+}

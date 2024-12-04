@@ -2,13 +2,13 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { setUpWebGL } from "../util/webgl/setup";
 import Painter from "../render/painter.js"
 import { getFragmentShader } from "../shader/fragmentShader.js";
-import { getVertexShader } from "../shader/vertexShader.js";
+import { getVertexShader , getLineVertexShader } from "../shader/vertexShader.js";
 import { createShader } from "../shader/shader.js";
 import { mat3, vec3 } from 'gl-matrix';
 
 const Map = (props) => {
   const [gl, setGl] = useState(null);
-  const [camera, setCamera] = useState({ x: 0, y: 0, z: 0 });
+  const [camera, setCamera] = useState({ x: 0.21575905555555552, y: 0.05031202461430684, z: 0 });
   const [matrix, setMatrix] = useState([1, 0, 0, 0, 1, 0, 0, 0, 1]);
   const [program, setProgram] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -51,11 +51,21 @@ const Map = (props) => {
     if (glContext != null) {
       glContext.viewport(0, 0, glContext.canvas.width, glContext.canvas.height);
       let fragmentShaderSource = getFragmentShader();
-      let vertexShaderSource = getVertexShader();
+      let vertexShaderSource = getLineVertexShader();
 
       const vertexShader = createShader(glContext, glContext.VERTEX_SHADER, vertexShaderSource);
       const fragmentShader = createShader(glContext, glContext.FRAGMENT_SHADER, fragmentShaderSource);
 
+
+      if (!glContext.getShaderParameter(vertexShader, glContext.COMPILE_STATUS)) {
+        console.error("Vertex shader compilation error:", glContext.getShaderInfoLog(vertexShader));
+        return;
+      }
+      if (!glContext.getShaderParameter(fragmentShader, glContext.COMPILE_STATUS)) {
+        console.error("Fragment shader compilation error:", glContext.getShaderInfoLog(fragmentShader));
+        return;
+      }
+      
       const shaderProgram = glContext.createProgram();
       glContext.attachShader(shaderProgram, vertexShader);
       glContext.attachShader(shaderProgram, fragmentShader);
@@ -191,16 +201,17 @@ const Map = (props) => {
 
 
   return (
-    <div>
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
       <canvas 
         ref={canvasRef} 
         id="gebeta-web-gl" 
         width={props.width} 
         height={props.height}
       ></canvas>
-      {gl && <Painter gl={gl} camera={camera} matrix={matrix} program={program} positionBuffer = {positionBuffer} />}
+      {gl && <Painter gl={gl} camera={camera} matrix={matrix} program={program} positionBuffer={positionBuffer} />}
     </div>
   );
+  
 };
 
 export default Map;
