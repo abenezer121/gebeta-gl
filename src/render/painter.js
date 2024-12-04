@@ -9,7 +9,7 @@ const Painter = (props) => {
         }
 
 
-        let geometry_data = handleLine()
+        let geometry_data = handleLine(props.camera.z)
       console.log(geometry_data)
         props.gl.useProgram(props.program);
 
@@ -70,7 +70,14 @@ const Painter = (props) => {
         props.gl.bufferData(props.gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(geometry_data.indices), props.gl.STATIC_DRAW);
 
         const matrixLocation = props.gl.getUniformLocation(props.program, "u_matrix");
-        props.gl.uniform1f(widthLocation, 0.01);
+
+        const canvasWidth = props.gl.canvas.width;
+        const canvasHeight = props.gl.canvas.height;
+        const scale = 1 / Math.pow(2, props.camera.z);  // Adjust based on zoom level
+        const dynamicWidth = (canvasWidth + canvasHeight) * scale * 0.00001;  // Adjust the scale factor as necessary
+
+
+        props.gl.uniform1f(widthLocation, dynamicWidth);
         props.gl.uniformMatrix3fv(matrixLocation, false, props.matrix);
 
         
@@ -90,5 +97,6 @@ const Painter = (props) => {
 }
 
 export default Painter
+
 
 

@@ -8,7 +8,9 @@ import { mat3, vec3 } from 'gl-matrix';
 
 const Map = (props) => {
   const [gl, setGl] = useState(null);
-  const [camera, setCamera] = useState({ x: 0.21575905555555552, y: 0.05031202461430684, z: 0 });
+  // const [camera, setCamera] = useState({ x: 0.21571994444444442, y: 0.05038931492117216, z: 16 });
+  const [camera, setCamera] = useState({ x: 0, y: 0, z: 0 });
+  
   const [matrix, setMatrix] = useState([1, 0, 0, 0, 1, 0, 0, 0, 1]);
   const [program, setProgram] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -205,6 +207,7 @@ const Map = (props) => {
       <canvas 
         ref={canvasRef} 
         id="gebeta-web-gl" 
+        
         width={props.width} 
         height={props.height}
       ></canvas>
