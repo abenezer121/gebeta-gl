@@ -48,56 +48,58 @@ function getVerticesFromCoordinates(coordinate){
      
     }
 
-export const handleLine = () => {
+    export const handleLine = (zoom, geojsonData) => {
 
-
-  const coordinate = [
-          // [38.81551, 9.00382],
-          // [38.81431 , 9.02005],
-          // [38.83663 , 9.01869],
-          // [38.83581 , 9.03285 ],
-          // [38.82959 , 9.03243]
-          [-132.2,65.4],
-          [-0.4,68.5],
-          [12.0,-29.5],
-          [147.7,-32.5],
-          [116.0,23.9],
-          [-101.3,19.6]
-  ]
+  const coordinate = [];
   
  
-  const points = []
-  for (let i =0; i < coordinate.length; i++){
-    const [x, y] = WebMercatorfromLngLat(coordinate[i]);
-    console.log(x)
-    console.log(y)
-
-    points.push(x)
-    points.push(y)
-    
+  if (geojsonData && geojsonData.features) {
+    geojsonData.features.forEach(feature => {
+      if (feature.geometry.type === "LineString") {
+        coordinate.push(feature.geometry.coordinates);
+      }
+    });
   }
 
-  const lineData = []
-  const normals = []
-  const sides = []
-  for (let i=0; i < points.length - 2; i+= 2){
-        const x1 = points[i];
-        const y1 = points[i + 1];
-        const x2 = points[i + 2];
-        const y2 = points[i + 3];
+  const allLineData = [];
+  const allNormals = [];
+  const allSides = [];
+  const allIndices = [];
+  
+  let globalPointIndex = 0; 
 
-        // Calculate normal
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        const len = Math.sqrt(dx * dx + dy * dy);
-        const nx = dy / len;
-        const ny = -dx / len;
+  coordinate.forEach(line => {
+    const points = [];
+   
+    line.forEach(coord => {
+      const [x, y] = WebMercatorfromLngLat(coord); 
+      
+       
+      points.push(x, y);
+    });
 
-        lineData.push(
-          x1, y1,
-          x1, y1,
-          x2, y2,
-          x2, y2
+    const lineData = [];
+    const normals = [];
+    const sides = [];
+    const indices = [];
+
+    for (let i = 0; i < points.length - 2; i += 2) {
+      const x1 = points[i];
+      const y1 = points[i + 1];
+      const x2 = points[i + 2];
+      const y2 = points[i + 3];
+
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      const nx = dy / len;
+      const ny = -dx / len;
+
+      lineData.push(
+        x1, y1,
+        x1, y1,
+        x2, y2,
+        x2, y2
       );
 
       normals.push(
@@ -105,29 +107,33 @@ export const handleLine = () => {
         nx, ny,
         nx, ny,
         nx, ny
-    );
+      );
 
-    sides.push(-1, 1, -1, 1);
+      sides.push(-1, 1, -1, 1);
+    }
 
-
-
-  }
-
-  const indices = [];
-  for (let i = 0; i < (points.length - 2) / 2; i++) {
-      const baseIndex = i * 4;
+    for (let i = 0; i < (lineData.length / 4) - 1; i++) {
+      const baseIndex = i * 4 + globalPointIndex;
       indices.push(
         baseIndex, baseIndex + 1, baseIndex + 2,
         baseIndex + 1, baseIndex + 2, baseIndex + 3
       );
-  }
+    }
+
+    globalPointIndex += lineData.length / 2;
+
+    allLineData.push(...lineData);
+    allNormals.push(...normals);
+    allSides.push(...sides);
+    allIndices.push(...indices);
+  });
 
   return {
-    points : points , 
-    lineData : lineData , 
-    normals : normals , 
-    sides : sides,
-    indices : indices
-  }
-
+    points: allLineData,  
+    lineData: allLineData, 
+    normals: allNormals,
+    sides: allSides,
+    indices: allIndices
+  };
 }
+

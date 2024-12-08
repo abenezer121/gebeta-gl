@@ -6,7 +6,7 @@ export const setUpWebGL = (canvasId) => {
     if (gl == null) {
         return null
     }
-    gl.clearColor(0.9,0.9,0.8,1)
-    gl.clear(gl.COLOR_BUFFER_BIT)
+    // gl.clearColor(1.0,1.0,1.0,1)
+    // gl.clear(gl.COLOR_BUFFER_BIT)
     return  gl
 }

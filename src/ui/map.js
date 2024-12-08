@@ -8,14 +8,15 @@ import { mat3, vec3 } from 'gl-matrix';
 
 const Map = (props) => {
   const [gl, setGl] = useState(null);
-  // const [camera, setCamera] = useState({ x: 0.21571994444444442, y: 0.05038931492117216, z: 16 });
-  const [camera, setCamera] = useState({ x: 0, y: 0, z: 0 });
-  
+  const [camera, setCamera] = useState({ x: 0.21550686944444442, y: 0.05013986905486578, z: 16 });
+  // const [camera, setCamera] = useState({ x: 0, y: 0, z: 0 });
+ 
   const [matrix, setMatrix] = useState([1, 0, 0, 0, 1, 0, 0, 0, 1]);
   const [program, setProgram] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
  const [positionBuffer , setPositionBuffer] = useState(null)
+
 
   const canvasRef = useRef(null);
 
@@ -47,6 +48,8 @@ const Map = (props) => {
 
     return { x: clipX, y: clipY };
   }
+
+  
 
   useEffect(() => {
     let glContext = setUpWebGL("gebeta-web-gl");
@@ -88,6 +91,7 @@ const Map = (props) => {
     const canvas = document.getElementById("gebeta-web-gl");
 
     const handleWheel = (event) => {
+      event.preventDefault();
       const mousePos = getMousePositionInClipSpace(event, canvas);
 
       const [preZoomX, preZoomY] = vec3.transformMat3(
@@ -125,7 +129,7 @@ const Map = (props) => {
       setCamera(newCamera);
       updateProjectionMatrix(newCamera);
 
-      event.preventDefault();
+     
     };
 
     if (canvas) {
@@ -211,7 +215,7 @@ const Map = (props) => {
         width={props.width} 
         height={props.height}
       ></canvas>
-      {gl && <Painter gl={gl} camera={camera} matrix={matrix} program={program} positionBuffer={positionBuffer} />}
+      {gl && <Painter  gl={gl} camera={camera} matrix={matrix} program={program} positionBuffer={positionBuffer} />}
     </div>
   );
   
