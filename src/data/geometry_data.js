@@ -55,8 +55,11 @@ function getVerticesFromCoordinates(coordinate){
  
   if (geojsonData && geojsonData.features) {
     geojsonData.features.forEach(feature => {
-      if (feature.geometry.type === "LineString") {
-        coordinate.push(feature.geometry.coordinates);
+      if (feature.type === 2) {
+        for(let i =0; i < feature.geometry.length; i++){
+          coordinate.push(feature.geometry[i]);
+        }
+        
       }
     });
   }
@@ -72,9 +75,13 @@ function getVerticesFromCoordinates(coordinate){
     const points = [];
    
     line.forEach(coord => {
-      const [x, y] = WebMercatorfromLngLat(coord); 
-      
-       
+      // const [x, y] = WebMercatorfromLngLat(coord); 
+      let x = coord[0]
+      let y = coord[1]
+      x = -1 + (x * 2);
+      y = 1 - (y * 2);
+      // console.log(x)
+      // console.log(y)
       points.push(x, y);
     });
 

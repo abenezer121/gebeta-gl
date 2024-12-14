@@ -5,12 +5,13 @@ import { getFragmentShader } from "../shader/fragmentShader.js";
 import { getVertexShader , getLineVertexShader } from "../shader/vertexShader.js";
 import { createShader } from "../shader/shader.js";
 import { mat3, vec3 } from 'gl-matrix';
-
+import {lngFromMercatorX , latFromMercatorY , fromXY} from "./../util/mercator.js"
+import {pointToTile} from "./../util/tile/util.js"
 const Map = (props) => {
   const [gl, setGl] = useState(null);
-  const [camera, setCamera] = useState({ x: 0.21550686944444442, y: 0.05013986905486578, z: 16 });
+  const [camera, setCamera] = useState({ x: 0.21486253944444456, y: 0.05057221386852884, z: 14 });
   // const [camera, setCamera] = useState({ x: 0, y: 0, z: 0 });
- 
+
   const [matrix, setMatrix] = useState([1, 0, 0, 0, 1, 0, 0, 0, 1]);
   const [program, setProgram] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -50,6 +51,66 @@ const Map = (props) => {
   }
 
   
+  // get the tiles 
+  useEffect(() => {
+    let TILE_SIZE = 4096
+    const MAX_TILE_ZOOM = 18;
+    const canvas = document.getElementById("gebeta-web-gl");
+    if (!canvas) return;
+    
+    const zoomScale = Math.pow(2, camera.z);
+    
+    const px = (1 + camera.x) / 2;
+    const py = (1 - camera.y) / 2;
+
+    const wx = px * TILE_SIZE;
+    const wy = py * TILE_SIZE;
+
+    // get zoom px
+    const zx = wx * zoomScale;
+    const zy = wy * zoomScale;
+    
+    // get bottom-left and top-right pixels
+    let x1 = zx - (canvas.width / 2);
+    let y1 = zy + (canvas.height / 2);
+    let x2 = zx + (canvas.width / 2);
+    let y2 = zy - (canvas.height / 2);
+
+    // convert to world coords
+    x1 = x1 / zoomScale / TILE_SIZE;
+    y1 = y1 / zoomScale / TILE_SIZE;
+    x2 = x2 / zoomScale / TILE_SIZE;
+    y2 = y2 / zoomScale / TILE_SIZE;
+    
+    const bbox = [
+      lngFromMercatorX(x1),
+      latFromMercatorY(y1),
+      lngFromMercatorX(x2),
+      latFromMercatorY(y2)
+    ];
+    
+    const z = Math.min(Math.trunc(camera.z), MAX_TILE_ZOOM);
+    const minTile = pointToTile(bbox[0], bbox[3], z); // top-left
+    const maxTile = pointToTile(bbox[2], bbox[1], z); // bottom-right
+    
+    
+    // tiles visible in viewport
+    let tilesInView = [];
+    const [minX, maxX] = [Math.max(minTile[0], 0), maxTile[0]];
+    const [minY, maxY] = [Math.max(minTile[1], 0), maxTile[1]];
+    for (let x = minX; x <= maxX; x++) {
+      for (let y = minY; y <= maxY; y++) {
+        tilesInView.push([x, y, z]);
+      }
+    }
+    // setTileToAsk(tilesInView)
+ 
+  
+    console.log(fromXY([camera.x , camera.y]))
+    console.log(tilesInView)
+
+}, [camera]);
+
 
   useEffect(() => {
     let glContext = setUpWebGL("gebeta-web-gl");

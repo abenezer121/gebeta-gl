@@ -17,11 +17,11 @@ export  function WebMercatorfromLngLat(lngLat) {
 }
 
 
-function lngFromMercatorX(x) {
+export function lngFromMercatorX(x) {
   return x * 360 - 180;
 }
 
-function latFromMercatorY(y) {
+export function latFromMercatorY(y) {
   const y2 = 180 - y * 360;
   return 360 / Math.PI * Math.atan(Math.exp(y2 * Math.PI / 180)) - 90;
 }

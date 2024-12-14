@@ -68,8 +68,8 @@ const Painter = (props) => {
 
       const canvasWidth = props.gl.canvas.width;
       const canvasHeight = props.gl.canvas.height;
-      const scale = 1 / Math.pow(2, props.camera.z);
-      const dynamicWidth = (canvasWidth + canvasHeight) * scale * 0.00001;
+      const scale = 2 / Math.pow(2, props.camera.z);
+      const dynamicWidth = (canvasWidth + canvasHeight) * scale * 0.0000009;
 
       props.gl.uniform1f(widthLocation, dynamicWidth);
       props.gl.uniformMatrix3fv(matrixLocation, false, props.matrix);
@@ -81,7 +81,7 @@ const Painter = (props) => {
       const fetchGeoJSON = async () => {
           if (!geometryDataRef.current) {
               try {
-                  const response = await fetch('/map.geojson');
+                  const response = await fetch('/tile.json');
                   if (response.ok) {
                       const data = await response.json();
                       geometryDataRef.current = data;
