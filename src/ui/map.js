@@ -7,6 +7,9 @@ import { createShader } from "../shader/shader.js";
 import { mat3, vec3 } from 'gl-matrix';
 import {lngFromMercatorX , latFromMercatorY , fromXY} from "./../util/mercator.js"
 import {pointToTile} from "./../util/tile/util.js"
+import { throttle } from 'lodash';
+
+
 const Map = (props) => {
   const [gl, setGl] = useState(null);
   const [camera, setCamera] = useState({ x: 0.21555685394999355, y: 0.050316791498310726, z: 14 });
@@ -18,6 +21,7 @@ const Map = (props) => {
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [positionBuffer , setPositionBuffer] = useState(null)
   const [tileToAsk , setTileToAsk] = useState([])
+  const [previousTileToAsk , setPreviousTileToAsk] = useState([])
 
  const [worker, setWorker] = useState(null);
   const canvasRef = useRef(null);
@@ -31,16 +35,41 @@ const Map = (props) => {
     };
   }, []);
 
-  useEffect(()=>{
-    if (worker) {
-     
-        worker.postMessage(tileToAsk);
-      
-      worker.onmessage = (e) => {
-        setTileData(e.data)
-      };
+  function areArraysNotSimilar(arr1, arr2) {
+    if (arr1.length !== arr2.length) {
+        return true;
     }
-  },[tileToAsk])
+
+    for (let i = 0; i < arr1.length; i++) {
+        if (Array.isArray(arr1[i]) && Array.isArray(arr2[i])) {
+            if (areArraysNotSimilar(arr1[i], arr2[i])) {
+                return true;
+            }
+        }
+        else if (arr1[i] !== arr2[i]) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+useEffect(() => {
+  if (worker) {
+    const handleWorker = throttle(() => {
+      if(previousTileToAsk.length === 0 || areArraysNotSimilar(previousTileToAsk, tileToAsk)) {
+        setPreviousTileToAsk(tileToAsk);
+        worker.postMessage(tileToAsk);
+      }
+    }, 200);
+
+    handleWorker();
+
+    worker.onmessage = (e) => {
+      setTileData(e.data);
+    };
+  }
+}, [tileToAsk, worker]);
 
  
 

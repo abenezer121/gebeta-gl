@@ -11,10 +11,15 @@ self.onmessage = function (e) {
             .then((data) => data.json())
             .then((jsondata) => {
                if(jsondata.data.features != null){
-                console.log(jsondata.data)
+                
                 for (let o = 0; o < jsondata.data.features.length; o++) {
                     _data.push(jsondata.data.features[o]);
                 }
+               }else{
+                console.log("failed " , item)
+                console.log("failed " , item)
+                console.log("failed " , item)
+                
                }
                 
             })
