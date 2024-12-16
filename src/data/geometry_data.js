@@ -52,17 +52,45 @@ function getVerticesFromCoordinates(coordinate){
 
   const coordinate = [];
   
- 
+    
   if (geojsonData && geojsonData.features) {
     geojsonData.features.forEach(feature => {
-      if (feature.type === 2) {
+     
+      if (feature.type === "2") {
+   
         for(let i =0; i < feature.geometry.length; i++){
-          coordinate.push(feature.geometry[i]);
-        }
-        
+          let point = []
+          for(let j =0 ; j < feature.geometry[i].point.length; j++){
+           
+            point.push([feature.geometry[i].point[j].x , feature.geometry[i].point[j].y]);
+          }
+          coordinate.push(point);
       }
+    }else if (feature.type === "3"){
+      for(let i =0; i < feature.geometry.length; i++){
+        let point = []
+        for(let j =0 ; j < feature.geometry[i].point.length; j++){
+         
+          point.push([feature.geometry[i].point[j].x , feature.geometry[i].point[j].y]);
+        }
+        coordinate.push(point);
+    }
+      }
+        
+  
     });
   }
+ 
+  // if (geojsonData && geojsonData.features) {
+  //   geojsonData.features.forEach(feature => {
+  //     if (feature.type === 2) {
+  //       for(let i =0; i < feature.geometry.length; i++){
+  //         coordinate.push(feature.geometry[i]);
+  //       }
+        
+  //     }
+  //   });
+  // }
 
   const allLineData = [];
   const allNormals = [];

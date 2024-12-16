@@ -9,17 +9,40 @@ import {lngFromMercatorX , latFromMercatorY , fromXY} from "./../util/mercator.j
 import {pointToTile} from "./../util/tile/util.js"
 const Map = (props) => {
   const [gl, setGl] = useState(null);
-  const [camera, setCamera] = useState({ x: 0.21486253944444456, y: 0.05057221386852884, z: 14 });
-  // const [camera, setCamera] = useState({ x: 0, y: 0, z: 0 });
+  const [camera, setCamera] = useState({ x: 0.21555685394999355, y: 0.050316791498310726, z: 14 });
 
+  const [tileData , setTileData] = useState(null)
   const [matrix, setMatrix] = useState([1, 0, 0, 0, 1, 0, 0, 0, 1]);
   const [program, setProgram] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
- const [positionBuffer , setPositionBuffer] = useState(null)
+  const [positionBuffer , setPositionBuffer] = useState(null)
+  const [tileToAsk , setTileToAsk] = useState([])
 
-
+ const [worker, setWorker] = useState(null);
   const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const newWorker = new Worker(new URL('./worker.js', import.meta.url));
+    setWorker(newWorker);
+
+    return () => {
+      newWorker.terminate();
+    };
+  }, []);
+
+  useEffect(()=>{
+    if (worker) {
+     
+        worker.postMessage(tileToAsk);
+      
+      worker.onmessage = (e) => {
+        setTileData(e.data)
+      };
+    }
+  },[tileToAsk])
+
+ 
 
   // shitty react wont wait for the camera state to update yiramedal
   const updateProjectionMatrix = useCallback((_camera) => {
@@ -54,7 +77,7 @@ const Map = (props) => {
   // get the tiles 
   useEffect(() => {
     let TILE_SIZE = 4096
-    const MAX_TILE_ZOOM = 18;
+    const MAX_TILE_ZOOM = 22;
     const canvas = document.getElementById("gebeta-web-gl");
     if (!canvas) return;
     
@@ -103,11 +126,13 @@ const Map = (props) => {
         tilesInView.push([x, y, z]);
       }
     }
-    // setTileToAsk(tilesInView)
+    setTileToAsk(tilesInView)
  
-  
-    console.log(fromXY([camera.x , camera.y]))
+    let _coords = fromXY([camera.x , camera.y]) 
+    console.log([_coords[1] , _coords[0]])
     console.log(tilesInView)
+    console.log(camera)
+
 
 }, [camera]);
 
@@ -276,7 +301,7 @@ const Map = (props) => {
         width={props.width} 
         height={props.height}
       ></canvas>
-      {gl && <Painter  gl={gl} camera={camera} matrix={matrix} program={program} positionBuffer={positionBuffer} />}
+      {gl && <Painter tileData={tileData} gl={gl} camera={camera} matrix={matrix} program={program} positionBuffer={positionBuffer} />}
     </div>
   );
   

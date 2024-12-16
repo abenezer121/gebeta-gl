@@ -1,12 +1,10 @@
 import React, {useEffect , useRef , useCallback} from "react"
 import {handleLine} from "../data/geometry_data"
-import {getBoundingBox} from "../data/geometry_data" 
 
 
 const Painter = (props) => {
 
   const buffersInitialized = useRef(false);
-  const geometryDataRef = useRef(null);
   const positionBufferRef = useRef(null);
   const normalBufferRef = useRef(null);
   const sideBufferRef = useRef(null);
@@ -31,8 +29,7 @@ const Painter = (props) => {
       const positionAttributeLocation = props.gl.getAttribLocation(props.program, "a_position");
       const normalLocation = props.gl.getAttribLocation(props.program, 'a_normal');
       const sideLocation = props.gl.getAttribLocation(props.program, 'a_side');
-      const widthLocation = props.gl.getUniformLocation(props.program, 'u_width');
-
+    
     
       props.gl.bindBuffer(props.gl.ARRAY_BUFFER, positionBufferRef.current);
       props.gl.bufferData(props.gl.ARRAY_BUFFER, new Float32Array(geometry_data.lineData), props.gl.STATIC_DRAW);
@@ -65,53 +62,46 @@ const Painter = (props) => {
 
       const matrixLocation = props.gl.getUniformLocation(props.program, "u_matrix");
       const widthLocation = props.gl.getUniformLocation(props.program, "u_width");
-
-      const canvasWidth = props.gl.canvas.width;
-      const canvasHeight = props.gl.canvas.height;
-      const scale = 2 / Math.pow(2, props.camera.z);
-      const dynamicWidth = (canvasWidth + canvasHeight) * scale * 0.0000009;
-
-      props.gl.uniform1f(widthLocation, dynamicWidth);
+      const zoomLocation = props.gl.getUniformLocation(props.program, "u_zoom");
+      const viewportLocation = props.gl.getUniformLocation(props.program, "u_viewport_size");
+      
+      let baseWidth= 0.0000001
+      props.gl.uniform1f(widthLocation, baseWidth);
+      props.gl.uniform1f(zoomLocation, props.camera.z);
+      props.gl.uniform2f(viewportLocation, 
+          props.gl.canvas.width,
+          props.gl.canvas.height
+      );
+      // props.gl.uniform1f(widthLocation, dynamicWidth);
       props.gl.uniformMatrix3fv(matrixLocation, false, props.matrix);
 
       props.gl.drawElements(props.gl.TRIANGLES, indexCount, props.gl.UNSIGNED_SHORT, 0);
   }, [props.gl, props.program, props.matrix, props.camera.z]);
 
   useEffect(() => {
-      const fetchGeoJSON = async () => {
-          if (!geometryDataRef.current) {
-              try {
-                  const response = await fetch('/tile.json');
-                  if (response.ok) {
-                      const data = await response.json();
-                      geometryDataRef.current = data;
-                  }
-              } catch (error) {
-                  console.error('Error fetching GeoJSON:', error);
-                  return;
-              }
-          }
+    if (!props.tileData || props.tileData == null) {
+   
+      return;
+    }
 
-          if (!props.gl || !props.program) return;
+    if (!props.gl || !props.program) return;
 
-          initBuffers();
-          const geometry_data = handleLine(props.camera.z, geometryDataRef.current);
-          const indexCount = updateBuffers(geometry_data);
-          render(indexCount);
-      };
+    initBuffers();
+    const geometry_data = handleLine(props.camera.z, props.tileData);
+    const indexCount = updateBuffers(geometry_data);
+    render(indexCount);
 
-      fetchGeoJSON();
+    return () => {
+      if (props.gl && buffersInitialized.current) {
+        props.gl.deleteBuffer(positionBufferRef.current);
+        props.gl.deleteBuffer(normalBufferRef.current);
+        props.gl.deleteBuffer(sideBufferRef.current);
+        props.gl.deleteBuffer(indexBufferRef.current);
+        buffersInitialized.current = false;
+      }
+    };
+  }, [props.gl, props.program, props.matrix, props.camera, props.tileData, initBuffers, updateBuffers, render]);
 
-      return () => {
-          if (props.gl && buffersInitialized.current) {
-              props.gl.deleteBuffer(positionBufferRef.current);
-              props.gl.deleteBuffer(normalBufferRef.current);
-              props.gl.deleteBuffer(sideBufferRef.current);
-              props.gl.deleteBuffer(indexBufferRef.current);
-              buffersInitialized.current = false;
-          }
-      };
-  }, [props.gl, props.program, props.matrix, props.camera.z, initBuffers, updateBuffers, render]);
 
   return null;
 };

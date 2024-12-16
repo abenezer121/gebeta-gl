@@ -1,11 +1,5 @@
-self.onmessage = function(e) {
-    const { type, data } = e.data;
-    switch(type) {
-      case 'calculateBounds':
-        break;
-      case 'projectCoordinates':
-        break;
-      default:
-        break;
-    }
-  };
+onmessage = (e) => {
+    console.log(e.data)
+    postMessage({ result: 0 });
+  
+ };
